@@ -1,6 +1,6 @@
 {
   "anlage": "Heinrich Pfeiffer",
-  "gespeichertAm": "2026-02-18T14:28:35.434Z",
+  "gespeichertAm": "2026-02-18T14:31:55.950Z",
   "parzellen": [
     {
       "nr": 1,
@@ -23,6 +23,29 @@
       "dusche": "nein",
       "gs": "nein",
       "awnw": "nein",
+      "sonst": ""
+    },
+    {
+      "nr": 2,
+      "paechter": "Görls ",
+      "datum": "2026-02-18",
+      "laube": "",
+      "groesse": "",
+      "baujahr": "",
+      "terrasse": "",
+      "sg": "",
+      "feuer": "",
+      "fjahr": "",
+      "kehr": "",
+      "pool": "",
+      "poolg": "",
+      "spuele": "",
+      "toil": "",
+      "wb": "",
+      "wm": "",
+      "dusche": "",
+      "gs": "",
+      "awnw": "",
       "sonst": ""
     }
   ]
