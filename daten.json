@@ -1,6 +1,6 @@
 {
   "anlage": "Heinrich Pfeiffer",
-  "gespeichertAm": "2026-02-18T13:39:29.293Z",
+  "gespeichertAm": "2026-02-18T13:41:40.478Z",
   "parzellen": [
     {
       "nr": 1,
@@ -21,6 +21,29 @@
       "wb": "nein",
       "wm": "nein",
       "dusche": "nein",
+      "gs": "nein",
+      "awnw": "nein",
+      "sonst": ""
+    },
+    {
+      "nr": 2,
+      "paechter": "Görls",
+      "datum": "2026-02-18",
+      "laube": "ja",
+      "groesse": "45",
+      "baujahr": "1983",
+      "terrasse": "ja",
+      "sg": "Schuppen",
+      "feuer": "ja",
+      "fjahr": "2015",
+      "kehr": "nein",
+      "pool": "ja",
+      "poolg": "45",
+      "spuele": "ja",
+      "toil": "ja",
+      "wb": "ja",
+      "wm": "nein",
+      "dusche": "ja",
       "gs": "nein",
       "awnw": "nein",
       "sonst": ""
