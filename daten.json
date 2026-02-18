@@ -1,0 +1,29 @@
+{
+  "anlage": "",
+  "gespeichertAm": "2026-02-18T13:19:56.306Z",
+  "parzellen": [
+    {
+      "nr": 1,
+      "paechter": "Meyer",
+      "datum": "2026-01-03",
+      "laube": "ja",
+      "groesse": "36",
+      "baujahr": "1985",
+      "terrasse": "ja",
+      "sg": "Blechschuppen",
+      "feuer": "ja",
+      "fjahr": "",
+      "kehr": "nein",
+      "pool": "ja",
+      "poolg": "3 m",
+      "spuele": "nein",
+      "toil": "nein",
+      "wb": "nein",
+      "wm": "nein",
+      "dusche": "nein",
+      "gs": "nein",
+      "awnw": "nein",
+      "sonst": ""
+    }
+  ]
+}
