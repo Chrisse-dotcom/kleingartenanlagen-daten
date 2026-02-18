@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Erfassungsbogen – Kleingartenanlagen</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+:root{--gd:#1a3a2a;--gm:#2d5a3d;--gl:#4a8c5c;--gp:#e8f2eb;--amber:#c8821a;--cream:#faf8f3;--text:#1a2015;--muted:#6b7a6e;--border:#c8d8cc;--red:#c0392b;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
+header{background:var(--gd);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.h-title{font-family:'DM Serif Display',serif;font-size:1.2rem;color:#fff;line-height:1.3;}
+.h-title span{color:#8ecfa0;font-style:italic;}
+.h-sub{font-size:.66rem;color:#8ecfa0;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+.h-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.h-meta label{font-size:.66rem;color:#8ecfa0;text-transform:uppercase;letter-spacing:.06em;}
+.anlage-input{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:6px 12px;color:#fff;font-family:'DM Sans',sans-serif;font-size:.88rem;width:200px;}
+.anlage-input::placeholder{color:rgba(255,255,255,.35);}
+.anlage-input:focus{outline:none;border-color:#8ecfa0;background:rgba(255,255,255,.15);}
+/* TABS */
+.tabs{background:var(--gd);border-bottom:2px solid rgba(255,255,255,.1);display:flex;padding:0 14px;gap:2px;overflow-x:auto;}
+.tab{padding:10px 16px;font-size:.81rem;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;white-space:nowrap;display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.tab:hover{color:rgba(255,255,255,.85);}
+.tab.active{color:#8ecfa0;border-bottom-color:#8ecfa0;}
+/* TOOLBARS */
+.toolbar{background:var(--gm);padding:10px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:8px;font-size:.81rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:filter .15s,transform .1s;white-space:nowrap;}
+.btn:hover{filter:brightness(1.12);transform:translateY(-1px);}
+.btn:active{transform:translateY(0);}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none;}
+.btn-pdf{background:var(--amber);color:#fff;}
+.btn-gh-save{background:#1e6b3a;color:#fff;}
+.btn-gh-hist{background:#1e3d6b;color:#fff;}
+.btn-gh-cfg{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);}
+.btn-add{background:#8ecfa0;color:var(--gd);}
+.btn-clear{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);}
+.btn-sec{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);}
+.t-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.gh-pill{display:flex;align-items:center;gap:6px;font-size:.72rem;color:rgba(255,255,255,.6);}
+.gh-dot{width:8px;height:8px;border-radius:50%;background:#666;transition:background .3s;flex-shrink:0;}
+.gh-dot.ok{background:#8ecfa0;}
+.gh-dot.err{background:#e05050;}
+.gh-dot.busy{background:var(--amber);animation:ghpulse .7s infinite;}
+@keyframes ghpulse{0%,100%{opacity:1;}50%{opacity:.25;};}
+.t-count{font-size:.76rem;color:rgba(255,255,255,.6);}
+/* PAGES */
+.page{display:none;}
+.page.active{display:block;}
+main{padding:16px 14px 80px;}
+@media(min-width:860px){main{max-width:1700px;padding:22px 28px 60px;margin:0 auto;}}
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+@media(min-width:600px){.dash-grid{grid-template-columns:repeat(3,1fr);}}
+@media(min-width:900px){.dash-grid{grid-template-columns:repeat(6,1fr);}}
+.stat-card{background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 14px;box-shadow:0 2px 10px rgba(26,58,42,.07);display:flex;flex-direction:column;gap:6px;}
+.stat-icon{font-size:1.4rem;line-height:1;}
+.stat-val{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--gd);line-height:1;}
+.stat-label{font-size:.71rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.stat-sub{font-size:.69rem;color:var(--muted);}
+.charts-row{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:20px;}
+@media(min-width:700px){.charts-row{grid-template-columns:1fr 1fr;}}
+@media(min-width:1100px){.charts-row{grid-template-columns:1fr 1fr 1fr;}}
+.chart-card{background:#fff;border-radius:12px;border:1px solid var(--border);padding:18px;box-shadow:0 2px 10px rgba(26,58,42,.07);}
+.chart-title{font-size:.76rem;font-weight:700;color:var(--gd);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;}
+.bar-chart{display:flex;flex-direction:column;gap:8px;}
+.bar-item{display:flex;align-items:center;gap:8px;}
+.bar-label{width:95px;flex-shrink:0;color:var(--text);text-align:right;font-size:.74rem;}
+.bar-track{flex:1;background:#f0f4f1;border-radius:20px;height:15px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:20px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.bar-count{width:26px;flex-shrink:0;font-weight:700;color:var(--gm);font-size:.74rem;text-align:right;}
+.parcel-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+@media(min-width:600px){.parcel-grid{grid-template-columns:repeat(2,1fr);}}
+@media(min-width:1000px){.parcel-grid{grid-template-columns:repeat(3,1fr);}}
+@media(min-width:1400px){.parcel-grid{grid-template-columns:repeat(4,1fr);}}
+.parcel-ov{background:#fff;border-radius:10px;border:1px solid var(--border);box-shadow:0 1px 8px rgba(26,58,42,.06);overflow:hidden;transition:box-shadow .15s,transform .15s;cursor:pointer;}
+.parcel-ov:hover{box-shadow:0 4px 18px rgba(26,58,42,.13);transform:translateY(-2px);}
+.parcel-ov-head{background:var(--gd);padding:10px 14px;display:flex;align-items:center;gap:10px;}
+.parcel-ov-nr{width:28px;height:28px;background:rgba(255,255,255,.18);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.86rem;flex-shrink:0;}
+.parcel-ov-name{font-weight:600;color:#fff;font-size:.86rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.parcel-ov-date{font-size:.68rem;color:#8ecfa0;}
+.parcel-ov-body{padding:12px 14px;}
+.parcel-badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.badge{padding:3px 8px;border-radius:20px;font-size:.67rem;font-weight:600;white-space:nowrap;}
+.badge-ja{background:#e6f4ec;color:var(--gm);}
+.badge-warn{background:#fff3e0;color:#b85c00;}
+.badge-grey{background:#f0f0f0;color:#888;}
+.parcel-ov-rows{display:flex;flex-direction:column;gap:4px;}
+.ov-row{display:flex;justify-content:space-between;font-size:.73rem;border-bottom:1px solid #f2f2f2;padding-bottom:3px;}
+.ov-row:last-child{border-bottom:none;padding-bottom:0;}
+.ov-key{color:var(--muted);}
+.ov-val{font-weight:600;color:var(--text);}
+.ov-val.ja{color:var(--gm);}
+.ov-val.nein{color:#ccc;}
+.dash-section-title{font-size:.8rem;font-weight:700;color:var(--gd);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;margin-top:4px;padding-bottom:6px;border-bottom:2px solid var(--gp);}
+.empty-dash{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-dash .ei{font-size:3rem;margin-bottom:12px;}
+/* MOBILE CARDS */
+.cards-list{display:flex;flex-direction:column;gap:14px;}
+.card{background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(26,58,42,.09);border:1px solid var(--border);overflow:hidden;}
+.card-header{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--gd);cursor:pointer;user-select:none;}
+.card-nr{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.93rem;flex-shrink:0;}
+.card-name{flex:1;font-weight:600;color:#fff;font-size:.9rem;}
+.card-name-sub{font-size:.69rem;color:#8ecfa0;margin-top:1px;}
+.card-toggle{color:#8ecfa0;font-size:1rem;transition:transform .2s;flex-shrink:0;}
+.card-toggle.open{transform:rotate(180deg);}
+.card-del{background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:.76rem;flex-shrink:0;transition:background .15s;}
+.card-del:hover{background:rgba(220,50,50,.5);}
+.card-body{display:none;padding:14px;}
+.card-body.open{display:block;}
+.field-group{margin-bottom:16px;}
+.field-group:last-child{margin-bottom:0;}
+.group-title{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--gm);border-radius:5px;padding:4px 10px;margin-bottom:10px;display:inline-block;}
+.group-title.g1{background:#2d5a3d;}.group-title.g2{background:#3b4a30;}.group-title.g3{background:#2d4a5a;}.group-title.g4{background:#4a3a2d;}.group-title.g5{background:#3a2d4a;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;}
+.field-row.single{grid-template-columns:1fr;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:.69rem;font-weight:600;color:var(--muted);}
+.field .fi,.field .fs{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:.87rem;color:var(--text);background:#fff;transition:border-color .15s;-webkit-appearance:none;appearance:none;}
+.field .fi:focus,.field .fs:focus{outline:none;border-color:var(--gl);box-shadow:0 0 0 3px rgba(74,140,92,.12);}
+.field .fs{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7a6e'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;}
+.field .fs.ja{color:var(--gm);font-weight:600;border-color:#a8d8b4;}
+.field .fs.nein{color:var(--muted);}
+/* DESKTOP TABLE */
+@media(min-width:860px){.cards-list{display:none;}.table-wrap{display:block;}}
+@media(max-width:859px){.table-wrap{display:none;}}
+.table-wrap{background:#fff;border-radius:12px;box-shadow:0 2px 20px rgba(26,58,42,.08);overflow-x:auto;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:.78rem;}
+thead tr.gr th{background:var(--gd);color:#8ecfa0;font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:8px 7px 6px;text-align:center;border-right:2px solid rgba(255,255,255,.1);}
+thead tr.gr th.g1{background:#2d5a3d;}thead tr.gr th.g2{background:#3b4a30;}thead tr.gr th.g3{background:#2d4a5a;}thead tr.gr th.g4{background:#4a3a2d;}thead tr.gr th.g5{background:#3a2d4a;}
+thead tr.fh th{background:var(--gp);color:var(--gd);font-size:.69rem;font-weight:600;padding:7px 6px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);text-align:center;white-space:normal;line-height:1.3;vertical-align:bottom;min-width:75px;}
+thead tr.fh th.tl{text-align:left;}thead tr.fh th.sep{border-right:2px solid var(--border);}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:#f5f9f6;}
+tbody td{padding:3px 4px;border-right:1px solid #eee;vertical-align:middle;}
+tbody td.sep{border-right:2px solid var(--border);}
+td.cnr{width:34px;text-align:center;font-weight:700;color:var(--gm);font-size:.83rem;}
+td.cck{width:26px;text-align:center;}
+.ci,.cs{width:100%;border:1px solid transparent;border-radius:4px;padding:3px 5px;font-family:'DM Sans',sans-serif;font-size:.77rem;background:transparent;color:var(--text);transition:border-color .15s,background .15s;}
+.ci:focus,.cs:focus{outline:none;border-color:var(--gl);background:#fff;box-shadow:0 0 0 2px rgba(74,140,92,.1);}
+.cs{cursor:pointer;}
+.ci[type="number"]{text-align:right;min-width:58px;}
+.ci[type="date"]{min-width:110px;}
+.cs.ja{color:var(--gm);font-weight:600;}
+.cs.nein{color:var(--muted);}
+.del-btn{background:none;border:none;cursor:pointer;color:#ccc;font-size:.88rem;padding:2px 4px;border-radius:4px;transition:color .15s,background .15s;}
+.del-btn:hover{color:var(--red);background:#fce;}
+.empty-state{text-align:center;padding:46px 20px;color:var(--muted);}
+.empty-state .ei{font-size:2.4rem;margin-bottom:10px;}
+.legend{margin-top:14px;display:flex;gap:14px;flex-wrap:wrap;font-size:.72rem;color:var(--muted);}
+.li{display:flex;align-items:center;gap:5px;}
+.ld{width:8px;height:8px;border-radius:50%;}
+/* TOAST / OVERLAY */
+.toast{position:fixed;bottom:20px;right:16px;background:var(--gd);color:#fff;padding:10px 18px;border-radius:8px;font-size:.81rem;box-shadow:0 4px 16px rgba(0,0,0,.28);transform:translateY(60px);opacity:0;transition:transform .26s,opacity .26s;z-index:3000;}
+.toast.show{transform:translateY(0);opacity:1;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;}
+.overlay.show{display:flex;}
+.ov-box{background:#fff;border-radius:12px;padding:32px 40px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.3);}
+.ov-icon{font-size:2.2rem;margin-bottom:10px;animation:spin 1.2s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ov-text{font-size:.93rem;color:var(--gm);font-weight:600;}
+.ov-sub{font-size:.76rem;color:var(--muted);margin-top:3px;}
+/* MODALS */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center;padding:16px;}
+.modal-backdrop.show{display:flex;}
+.modal{background:#fff;border-radius:14px;box-shadow:0 12px 50px rgba(0,0,0,.35);width:100%;max-width:500px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+.modal-head{background:var(--gd);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-head h2{font-family:'DM Serif Display',serif;font-size:1.05rem;color:#fff;line-height:1.2;}
+.modal-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:1.2rem;cursor:pointer;padding:3px 8px;border-radius:4px;line-height:1;}
+.modal-close:hover{color:#fff;background:rgba(255,255,255,.15);}
+.modal-body{padding:18px 20px;overflow-y:auto;flex:1;}
+.mf{margin-bottom:14px;}
+.mf label{display:block;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+.mf input{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);transition:border-color .15s;}
+.mf input:focus{outline:none;border-color:var(--gl);box-shadow:0 0 0 3px rgba(74,140,92,.1);}
+.hint{font-size:.69rem;color:var(--muted);margin-top:5px;line-height:1.5;}
+.hint a{color:var(--gl);text-decoration:none;}
+.hint code{background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:.85em;}
+.modal-alert{padding:9px 12px;border-radius:7px;font-size:.79rem;margin-bottom:14px;line-height:1.45;display:none;}
+.modal-alert.ok{background:#e6f4ec;color:#1a5c30;display:block;}
+.modal-alert.err{background:#fce8e8;color:#7a1010;display:block;}
+.modal-alert.info{background:#e8effe;color:#1a2f80;display:block;}
+.modal-actions{padding:12px 20px 16px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+/* HISTORY */
+.hist-scroll{overflow-y:auto;flex:1;}
+.hist-item{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);transition:background .1s;}
+.hist-item:last-child{border-bottom:none;}
+.hist-item:hover{background:var(--gp);}
+.hist-timeline{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;}
+.hist-dot-outer{width:12px;height:12px;border-radius:50%;border:2px solid var(--gm);display:flex;align-items:center;justify-content:center;}
+.hist-dot-inner{width:5px;height:5px;border-radius:50%;background:var(--gm);}
+.hist-info{flex:1;min-width:0;}
+.hist-msg{font-size:.82rem;font-weight:600;color:var(--text);}
+.hist-meta{font-size:.69rem;color:var(--muted);margin-top:3px;}
+.hist-sha{font-size:.63rem;color:#bbb;font-family:monospace;margin-top:1px;}
+.hist-load-btn{background:var(--gm);color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:.76rem;font-weight:600;cursor:pointer;flex-shrink:0;font-family:'DM Sans',sans-serif;}
+.hist-load-btn:hover{background:var(--gl);}
+.hist-empty{text-align:center;padding:40px;color:var(--muted);font-size:.85rem;}
+.hist-head-info{padding:12px 18px 4px;font-size:.75rem;color:var(--muted);border-bottom:1px solid var(--border);flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="h-title">Erfassungsbogen<br><span>Kleingartenanlagen</span></div>
+    <div class="h-sub">Checkliste bauliche Anlagen</div>
+  </div>
+  <div class="h-meta">
+    <label for="anlage-name">Kleingartenanlage</label>
+    <input class="anlage-input" id="anlage-name" type="text" placeholder="Name der Anlage…" oninput="save()">
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" id="tab-dash"   onclick="showTab('dash')">&#9783; Dashboard</div>
+  <div class="tab"        id="tab-erfass" onclick="showTab('erfass')">&#9998; Erfassung</div>
+</div>
+
+<!-- DASHBOARD TOOLBAR -->
+<div class="toolbar" id="toolbar-dash" style="display:flex">
+  <button class="btn btn-pdf"     onclick="exportDashPDF()">&#128196; PDF Bericht</button>
+  <button class="btn btn-gh-save" id="btn-gh-save" onclick="ghSave()">&#9729; In GitHub speichern</button>
+  <button class="btn btn-gh-hist" id="btn-gh-hist" onclick="ghShowHistory()">&#128336; Alte Stände laden</button>
+  <button class="btn btn-gh-cfg"  onclick="openGhModal()">&#9881; GitHub</button>
+  <div class="t-right">
+    <div class="gh-pill"><div class="gh-dot" id="gh-dot"></div><span id="gh-status-txt">Nicht konfiguriert</span></div>
+    <span class="t-count" id="tcount-dash-n">0 Parzellen</span>
+  </div>
+</div>
+
+<!-- ERFASSUNG TOOLBAR -->
+<div class="toolbar" id="toolbar-erfass" style="display:none">
+  <button class="btn btn-add"   onclick="addRow()">&#xff0b; Parzelle hinzufügen</button>
+  <button class="btn btn-clear" onclick="clearAll()">&#8635; Zurücksetzen</button>
+  <span class="t-count" id="tcount-erfass">0 Parzellen</span>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div class="page active" id="page-dash"><main>
+  <div id="dash-empty" class="empty-dash" style="display:none">
+    <div class="ei">&#127807;</div>
+    <p>Noch keine Parzellen.<br>Wechseln Sie zu <strong>Erfassung</strong>.</p>
+  </div>
+  <div id="dash-content">
+    <div class="dash-grid" id="kpi-grid"></div>
+    <div class="charts-row">
+      <div class="chart-card"><div class="chart-title">&#127968; Gebäude &amp; Ausstattung</div><div class="bar-chart" id="bar-geb"></div></div>
+      <div class="chart-card"><div class="chart-title">&#128167; Abwasser</div><div class="bar-chart" id="bar-abw"></div></div>
+      <div class="chart-card"><div class="chart-title">&#128197; Baujahre</div><div class="bar-chart" id="bar-bau"></div></div>
+    </div>
+    <div class="dash-section-title">Alle Parzellen im Überblick</div>
+    <div class="parcel-grid" id="parcel-grid"></div>
+  </div>
+</main></div>
+
+<!-- ══ ERFASSUNG ══ -->
+<div class="page" id="page-erfass"><main>
+  <div class="cards-list" id="cards-list">
+    <div class="empty-state" id="empty-mobile"><div class="ei">&#127807;</div><p>Keine Parzellen.<br>Tippen Sie auf <strong>Parzelle hinzufügen</strong>.</p></div>
+  </div>
+  <div class="table-wrap">
+    <table id="tbl">
+      <thead>
+        <tr class="gr">
+          <th colspan="2"></th><th colspan="3" style="text-align:left;padding-left:8px">Grunddaten</th>
+          <th colspan="4" class="g1">Gebäude</th><th colspan="3" class="g2">Feuerstätte</th>
+          <th colspan="2" class="g3">Pool</th><th colspan="7" class="g4">Abwasser</th><th colspan="1" class="g5">Sonstiges</th>
+        </tr>
+        <tr class="fh">
+          <th class="tl sep" style="min-width:34px">Nr.</th><th class="sep" style="min-width:26px"></th>
+          <th class="tl" style="min-width:130px">Pächter</th><th style="min-width:110px">Datum</th>
+          <th class="sep" style="min-width:80px">Laube<br>&gt;24m²?</th><th style="min-width:65px">Größe<br>(m²)</th>
+          <th style="min-width:90px">Baujahr</th><th style="min-width:88px">Terrasse<br>üb.?</th>
+          <th class="sep" style="min-width:112px">Sonst.<br>Gebäude</th>
+          <th style="min-width:98px">Feuer-<br>stätte?</th><th style="min-width:76px">Err.-<br>jahr</th>
+          <th class="sep" style="min-width:98px">Kehrbe-<br>schein.?</th>
+          <th style="min-width:78px">Pool?</th><th class="sep" style="min-width:88px">Pool-<br>größe</th>
+          <th style="min-width:74px">Spüle?</th><th style="min-width:74px">Toil.?</th>
+          <th style="min-width:86px">Wasch-<br>beck.?</th><th style="min-width:92px">Wasch-<br>masch.?</th>
+          <th style="min-width:74px">Dusche?</th><th style="min-width:92px">Geschirr-<br>sp.?</th>
+          <th class="sep" style="min-width:112px">Abw.-<br>Nachw.?</th><th style="min-width:138px">Sonstiges</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty-state" id="empty-desk"><div class="ei">&#127807;</div><p>Noch keine Parzellen.<br>Klicken Sie auf <strong>Parzelle hinzufügen</strong>.</p></div>
+  </div>
+  <div class="legend">
+    <div class="li"><div class="ld" style="background:var(--gm)"></div>ja = Vorhanden</div>
+    <div class="li"><div class="ld" style="background:var(--muted)"></div>nein = Nicht vorhanden</div>
+    <div class="li"><div class="ld" style="background:var(--amber)"></div>k.A. = Keine Angabe</div>
+  </div>
+</main></div>
+
+<!-- ══ GITHUB SETTINGS MODAL ══ -->
+<div class="modal-backdrop" id="gh-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>&#9729; GitHub Verbindung</h2>
+      <button class="modal-close" onclick="closeGhModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-alert" id="gh-alert"></div>
+      <div class="mf">
+        <label>GitHub Benutzername</label>
+        <input id="gh-user" type="text" placeholder="z.B. maxmustermann" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="mf">
+        <label>Repository-Name</label>
+        <input id="gh-repo" type="text" placeholder="z.B. kleingartenanlagen-daten" autocomplete="off" spellcheck="false">
+        <div class="hint">Das Repository muss auf GitHub existieren (öffentlich oder privat). Neu erstellen auf <a href="https://github.com/new" target="_blank">github.com/new</a></div>
+      </div>
+      <div class="mf">
+        <label>Dateiname im Repository</label>
+        <input id="gh-file" type="text" placeholder="daten.json" autocomplete="off" spellcheck="false">
+        <div class="hint">Pfad der JSON-Datei, z.B. <code>daten.json</code> oder <code>data/kg.json</code></div>
+      </div>
+      <div class="mf">
+        <label>Personal Access Token (PAT)</label>
+        <input id="gh-token" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="new-password">
+        <div class="hint">
+          Token erstellen: <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens</a> → Typ <strong>„Classic"</strong> → Scope <code>repo</code> aktivieren.<br>
+          Das Token wird <strong>nur lokal in diesem Browser</strong> gespeichert und niemals weitergegeben.
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-clear" onclick="closeGhModal()">Abbrechen</button>
+      <button class="btn btn-sec"   onclick="ghTestConnection()">&#10003; Verbindung testen</button>
+      <button class="btn btn-gh-save" onclick="ghSaveConfig()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HISTORY MODAL ══ -->
+<div class="modal-backdrop" id="hist-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head">
+      <h2>&#128336; Gespeicherte Stände</h2>
+      <button class="modal-close" onclick="document.getElementById('hist-modal').classList.remove('show')">&#x2715;</button>
+    </div>
+    <div class="hist-head-info" id="hist-head-info">Commits werden geladen…</div>
+    <div class="modal-alert" id="hist-alert" style="margin:10px 18px 0"></div>
+    <div class="hist-scroll" id="hist-list">
+      <div class="hist-empty">&#8987; Wird geladen…</div>
+    </div>
+  </div>
+</div>
+
+<!-- WORKING OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="ov-box">
+    <div class="ov-icon">&#9881;</div>
+    <div class="ov-text" id="ov-text">Wird verarbeitet…</div>
+    <div class="ov-sub"  id="ov-sub">Einen Moment bitte</div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   DATA & CONSTANTS
+══════════════════════════════════════════ */
+const YN = ['','ja','nein','k.A.'];
+const CY = new Date().getFullYear();
+const BAUS = ['', ...Array.from({length:CY-1899},(_,i)=>String(CY-i)), 'k.A.'];
+let rows=[], nextNr=1;
+
+/* ══════════════════════════════════════════
+   GITHUB CONFIG
+══════════════════════════════════════════ */
+let ghCfg = {user:'', repo:'', file:'daten.json', token:''};
+
+function ghLoadCfg(){
+  try{
+    const s = JSON.parse(localStorage.getItem('gh_cfg_kg')||'{}');
+    ghCfg = {user:s.user||'', repo:s.repo||'', file:s.file||'daten.json', token:s.token||''};
+  }catch(e){}
+  ghUpdateStatus();
+}
+
+function ghSaveCfg(){
+  localStorage.setItem('gh_cfg_kg', JSON.stringify(ghCfg));
+  ghUpdateStatus();
+}
+
+function ghIsConfigured(){
+  return !!(ghCfg.user && ghCfg.repo && ghCfg.token);
+}
+
+function ghUpdateStatus(){
+  const dot  = document.getElementById('gh-dot');
+  const txt  = document.getElementById('gh-status-txt');
+  const btnS = document.getElementById('btn-gh-save');
+  const btnH = document.getElementById('btn-gh-hist');
+  if(ghIsConfigured()){
+    dot.className  = 'gh-dot ok';
+    txt.textContent = ghCfg.user+'/'+ghCfg.repo;
+    btnS.disabled  = false;
+    btnH.disabled  = false;
+  } else {
+    dot.className  = 'gh-dot';
+    txt.textContent = 'Nicht konfiguriert';
+    btnS.disabled  = true;
+    btnH.disabled  = true;
+  }
+}
+
+function ghSetBusy(busy){
+  document.getElementById('gh-dot').className = busy ? 'gh-dot busy' : (ghIsConfigured()?'gh-dot ok':'gh-dot');
+}
+
+/* ── GitHub Modal open/close ── */
+function openGhModal(){
+  document.getElementById('gh-user').value  = ghCfg.user;
+  document.getElementById('gh-repo').value  = ghCfg.repo;
+  document.getElementById('gh-file').value  = ghCfg.file;
+  document.getElementById('gh-token').value = ghCfg.token;
+  setAlert('gh-alert','','');
+  document.getElementById('gh-modal').classList.add('show');
+}
+function closeGhModal(){ document.getElementById('gh-modal').classList.remove('show'); }
+
+function ghSaveConfig(){
+  ghCfg.user  = document.getElementById('gh-user').value.trim();
+  ghCfg.repo  = document.getElementById('gh-repo').value.trim();
+  ghCfg.file  = document.getElementById('gh-file').value.trim() || 'daten.json';
+  ghCfg.token = document.getElementById('gh-token').value.trim();
+  if(!ghCfg.user||!ghCfg.repo||!ghCfg.token){ setAlert('gh-alert','err','Bitte alle Felder ausfüllen.'); return; }
+  ghSaveCfg();
+  setAlert('gh-alert','ok','Einstellungen gespeichert.');
+  setTimeout(closeGhModal, 800);
+}
+
+async function ghTestConnection(){
+  const u = document.getElementById('gh-user').value.trim();
+  const r = document.getElementById('gh-repo').value.trim();
+  const t = document.getElementById('gh-token').value.trim();
+  if(!u||!r||!t){ setAlert('gh-alert','err','Bitte alle Felder ausfüllen.'); return; }
+  setAlert('gh-alert','info','Verbindung wird getestet…');
+  try{
+    const res = await fetch(`https://api.github.com/repos/${u}/${r}`, {
+      headers:{'Authorization':'token '+t,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(res.ok){
+      const d = await res.json();
+      setAlert('gh-alert','ok','&#10003; Verbunden mit Repository „'+d.full_name+'"'+(d.private?' (privat)':' (öffentlich)'));
+    } else if(res.status===404){
+      setAlert('gh-alert','err','Repository nicht gefunden. Bitte Username und Repo-Namen prüfen.');
+    } else if(res.status===401){
+      setAlert('gh-alert','err','Token ungültig oder abgelaufen. Bitte neu erstellen.');
+    } else {
+      setAlert('gh-alert','err','Fehler: HTTP '+res.status);
+    }
+  }catch(e){
+    setAlert('gh-alert','err','Netzwerkfehler: '+e.message);
+  }
+}
+
+/* ══════════════════════════════════════════
+   GITHUB SAVE
+══════════════════════════════════════════ */
+async function ghSave(){
+  if(!ghIsConfigured()){ openGhModal(); return; }
+  showOverlay('In GitHub speichern…','Datei wird übertragen');
+  ghSetBusy(true);
+  try{
+    const payload = {
+      anlage: anlageVal(),
+      gespeichertAm: new Date().toISOString(),
+      parzellen: rows
+    };
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+    const {user,repo,file,token} = ghCfg;
+    const apiUrl = `https://api.github.com/repos/${user}/${repo}/contents/${file}`;
+    const headers = {'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+
+    // get current SHA (needed for update)
+    let sha = null;
+    try{
+      const get = await fetch(apiUrl, {headers});
+      if(get.ok){ const d=await get.json(); sha=d.sha; }
+    }catch(e){}
+
+    const now = new Date();
+    const commitMsg = `Speicherstand ${now.toLocaleDateString('de-DE')} ${now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} – ${rows.length} Parzelle${rows.length!==1?'n':''}`;
+    const body = {message:commitMsg, content};
+    if(sha) body.sha = sha;
+
+    const put = await fetch(apiUrl, {method:'PUT', headers, body:JSON.stringify(body)});
+    if(!put.ok){
+      const err = await put.json();
+      throw new Error(err.message||'HTTP '+put.status);
+    }
+    hideOverlay();
+    ghSetBusy(false);
+    toast('&#10003; Gespeichert in GitHub: '+commitMsg);
+  }catch(e){
+    hideOverlay();
+    ghSetBusy(false);
+    toast('&#10005; Fehler: '+e.message);
+    console.error(e);
+  }
+}
+
+/* ══════════════════════════════════════════
+   GITHUB HISTORY
+══════════════════════════════════════════ */
+async function ghShowHistory(){
+  if(!ghIsConfigured()){ openGhModal(); return; }
+  document.getElementById('hist-modal').classList.add('show');
+  document.getElementById('hist-head-info').textContent = 'Commits werden geladen…';
+  document.getElementById('hist-list').innerHTML = '<div class="hist-empty">&#8987; Wird geladen…</div>';
+  setAlert('hist-alert','','');
+  try{
+    const {user,repo,file,token} = ghCfg;
+    const headers = {'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'};
+    const res = await fetch(`https://api.github.com/repos/${user}/${repo}/commits?path=${encodeURIComponent(file)}&per_page=30`, {headers});
+    if(!res.ok){
+      const e=await res.json();
+      throw new Error(e.message||'HTTP '+res.status);
+    }
+    const commits = await res.json();
+    if(!commits.length){
+      document.getElementById('hist-head-info').textContent = 'Noch keine Speicherstände vorhanden.';
+      document.getElementById('hist-list').innerHTML = '<div class="hist-empty">Noch keine Speicherstände vorhanden.<br>Speichern Sie Daten über den Button „In GitHub speichern".</div>';
+      return;
+    }
+    document.getElementById('hist-head-info').textContent = commits.length+' Speicherstand'+( commits.length!==1?'e':'')+' gefunden (neueste zuerst)';
+    const list = document.getElementById('hist-list');
+    list.innerHTML = '';
+    commits.forEach((c,i)=>{
+      const date = new Date(c.commit.committer.date);
+      const dateStr = date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+date.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' Uhr';
+      const msg = c.commit.message;
+      const sha = c.sha.substring(0,7);
+      const div = document.createElement('div');
+      div.className = 'hist-item';
+      div.innerHTML = `
+        <div class="hist-timeline">
+          <div class="hist-dot-outer"><div class="hist-dot-inner"></div></div>
+        </div>
+        <div class="hist-info">
+          <div class="hist-msg">${i===0?'&#127381; ':''}${esc(msg)}</div>
+          <div class="hist-meta">&#128197; ${dateStr} &nbsp;·&nbsp; &#128100; ${esc(c.commit.committer.name)}</div>
+          <div class="hist-sha">SHA: ${sha}</div>
+        </div>
+        <button class="hist-load-btn" onclick="ghLoadCommit('${c.sha}','${esc(msg)}')">
+          ${i===0?'Aktuell laden':'Laden'}
+        </button>`;
+      list.appendChild(div);
+    });
+  }catch(e){
+    document.getElementById('hist-head-info').textContent = 'Fehler beim Laden';
+    setAlert('hist-alert','err','Fehler: '+e.message);
+    document.getElementById('hist-list').innerHTML = '';
+  }
+}
+
+async function ghLoadCommit(sha, msg){
+  if(!confirm('Stand laden?\n\n„'+msg+'"\n\nDie aktuellen Daten werden überschrieben.')) return;
+  document.getElementById('hist-modal').classList.remove('show');
+  showOverlay('Stand wird geladen…', sha.substring(0,7));
+  try{
+    const {user,repo,file,token} = ghCfg;
+    const headers = {'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'};
+    // get file at this commit via git blob
+    const fileRes = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${file}?ref=${sha}`, {headers});
+    if(!fileRes.ok) throw new Error('HTTP '+fileRes.status);
+    const fileData = await fileRes.json();
+    const decoded = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g,''))));
+    const data = JSON.parse(decoded);
+    if(!data.parzellen||!Array.isArray(data.parzellen)) throw new Error('Ungültiges Dateiformat');
+    rows = data.parzellen;
+    nextNr = rows.length ? Math.max(...rows.map(r=>r.nr))+1 : 1;
+    if(data.anlage) document.getElementById('anlage-name').value = data.anlage;
+    render(); renderDash(); save();
+    hideOverlay();
+    toast('&#10003; '+rows.length+' Parzellen geladen');
+  }catch(e){
+    hideOverlay();
+    toast('&#10005; Fehler: '+e.message);
+    console.error(e);
+  }
+}
+
+/* ══════════════════════════════════════════
+   LOCAL STORAGE
+══════════════════════════════════════════ */
+function save(){
+  try{localStorage.setItem('kg7',JSON.stringify({rows,nextNr,anlage:anlageVal()}));}catch(e){}
+  updateCounts();
+}
+function load(){
+  try{
+    for(const k of ['kg7','kg6','kg5']){
+      const s=JSON.parse(localStorage.getItem(k)||'null');
+      if(s){rows=s.rows||[];nextNr=s.nextNr||rows.length+1;document.getElementById('anlage-name').value=s.anlage||'';return true;}
+    }
+  }catch(e){}
+  return false;
+}
+const anlageVal=()=>document.getElementById('anlage-name').value.trim();
+function updateCounts(){
+  const n=rows.length, t=n+' Parzelle'+(n!==1?'n':'');
+  document.getElementById('tcount-dash-n').textContent=t;
+  document.getElementById('tcount-erfass').textContent=t;
+}
+
+/* ══════════════════════════════════════════
+   CRUD
+══════════════════════════════════════════ */
+function addRow(data){
+  const r=data||{nr:nextNr++,paechter:'',datum:'',laube:'',groesse:'',baujahr:'',terrasse:'',sg:'',feuer:'',fjahr:'',kehr:'',pool:'',poolg:'',spuele:'',toil:'',wb:'',wm:'',dusche:'',gs:'',awnw:'',sonst:''};
+  rows.push(r); render(); save();
+  if(!data){toast('Parzelle '+r.nr+' hinzugefügt');setTimeout(()=>{const c=document.getElementById('card-'+r.nr);if(c)c.scrollIntoView({behavior:'smooth',block:'start'});},80);}
+}
+function delRow(nr){
+  if(!confirm('Parzelle '+nr+' löschen?')) return;
+  rows=rows.filter(r=>r.nr!==nr); render(); save(); toast('Gelöscht');
+}
+function clearAll(){
+  if(!confirm('Alle Daten zurücksetzen?')) return;
+  rows=[];nextNr=1;document.getElementById('anlage-name').value='';
+  render(); save(); toast('Zurückgesetzt');
+}
+function upd(nr,f,v){
+  const r=rows.find(r=>r.nr===nr);
+  if(r){
+    r[f]=v; save();
+    if(f==='paechter'||f==='datum'){
+      const cn=document.querySelector('#card-'+nr+' .card-name');
+      const cs=document.querySelector('#card-'+nr+' .card-name-sub');
+      if(cn) cn.textContent = r.paechter||'(kein Pächter)';
+      if(cs) cs.textContent = r.datum||'Kein Datum';
+    }
+  }
+}
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function applyCS(el){el.classList.remove('ja','nein');if(el.value==='ja')el.classList.add('ja');if(el.value==='nein')el.classList.add('nein');}
+function applyFS(el){el.classList.remove('ja','nein');if(el.value==='ja')el.classList.add('ja');if(el.value==='nein')el.classList.add('nein');}
+
+function render(){ renderCards(); renderTable(); updateCounts(); }
+
+/* ══════════════════════════════════════════
+   TAB NAVIGATION
+══════════════════════════════════════════ */
+function showTab(t){
+  ['dash','erfass'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('active',x===t);
+    document.getElementById('page-'+x).classList.toggle('active',x===t);
+    document.getElementById('toolbar-'+x).style.display=x===t?'flex':'none';
+  });
+  if(t==='dash') renderDash();
+}
+
+/* ══════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════ */
+const cnt=f=>rows.filter(r=>r[f]==='ja').length;
+const pct=n=>rows.length?Math.round(n/rows.length*100):0;
+
+function renderDash(){
+  const n=rows.length;
+  document.getElementById('dash-empty').style.display=n?'none':'block';
+  document.getElementById('dash-content').style.display=n?'block':'none';
+  if(!n) return;
+  const mitAbw=rows.filter(r=>['spuele','toil','wb','wm','dusche','gs'].some(f=>r[f]==='ja')).length;
+  const ohneNw=rows.filter(r=>['spuele','toil','wb','wm','dusche','gs'].some(f=>r[f]==='ja')&&r.awnw!=='ja').length;
+  document.getElementById('kpi-grid').innerHTML=
+    kpi('&#127809;','Parzellen',n,'erfasst')+
+    kpi('&#127968;','Laube &gt;24m²',cnt('laube'),pct(cnt('laube'))+'%')+
+    kpi('&#128293;','Feuerstätte',cnt('feuer'),pct(cnt('feuer'))+'%')+
+    kpi('&#128167;','Pool',cnt('pool'),pct(cnt('pool'))+'%')+
+    kpi('&#9879;','Abwasser',mitAbw,pct(mitAbw)+'%')+
+    kpi('&#9888;','Ohne Nachw.',ohneNw,ohneNw>0?'<span style="color:var(--red);font-weight:700">Handlungsbedarf</span>':'&#10003; OK');
+  renderBarChart('bar-geb',[
+    {l:'Laube >24m²',v:cnt('laube')},{l:'Terrasse üb.',v:cnt('terrasse')},
+    {l:'Feuerstätte',v:cnt('feuer')},{l:'Kehrbescheid',v:cnt('kehr')},{l:'Pool',v:cnt('pool')},
+  ],'#4a8c5c');
+  renderBarChart('bar-abw',[
+    {l:'Spüle',v:cnt('spuele')},{l:'Toilette',v:cnt('toil')},{l:'Waschbecken',v:cnt('wb')},
+    {l:'Waschmasch.',v:cnt('wm')},{l:'Dusche',v:cnt('dusche')},{l:'Geschirrsp.',v:cnt('gs')},{l:'Abw.-Nachw.',v:cnt('awnw')},
+  ],'#2d4a5a');
+  const bauMap={};
+  rows.forEach(r=>{
+    if(!r.baujahr||r.baujahr==='k.A.') return;
+    const yr=parseInt(r.baujahr);
+    const b=yr<1950?'vor 1950':yr<1970?'1950–69':yr<1990?'1970–89':yr<2000?'1990–99':yr<2010?'2000–09':yr<2020?'2010–19':'2020+';
+    bauMap[b]=(bauMap[b]||0)+1;
+  });
+  const bo=['vor 1950','1950–69','1970–89','1990–99','2000–09','2010–19','2020+'];
+  renderBarChart('bar-bau',bo.filter(k=>bauMap[k]).map(k=>({l:k,v:bauMap[k]})),'#c8821a');
+  const pg=document.getElementById('parcel-grid'); pg.innerHTML='';
+  rows.forEach(r=>{
+    const abwList=['spuele','toil','wb','wm','dusche','gs'].filter(f=>r[f]==='ja');
+    const badges=[
+      r.laube==='ja'?{t:'Laube >24m²',cls:'badge-ja'}:null,
+      r.feuer==='ja'?{t:'Feuerstätte',cls:'badge-ja'}:null,
+      r.pool==='ja'?{t:'Pool',cls:'badge-ja'}:null,
+      r.terrasse==='ja'?{t:'Terrasse',cls:'badge-ja'}:null,
+      abwList.length>0?{t:abwList.length+' Abw.-Anschl.',cls:'badge-ja'}:null,
+      abwList.length>0&&r.awnw!=='ja'?{t:'Kein Abw.-Nachw.',cls:'badge-warn'}:null,
+    ].filter(Boolean);
+    const d=document.createElement('div'); d.className='parcel-ov';
+    d.onclick=()=>{showTab('erfass');setTimeout(()=>{const c=document.getElementById('card-'+r.nr);if(c){c.scrollIntoView({behavior:'smooth',block:'start'});openCard(r.nr);}},80);};
+    d.innerHTML=`<div class="parcel-ov-head"><div class="parcel-ov-nr">${r.nr}</div><div style="flex:1;overflow:hidden"><div class="parcel-ov-name">${esc(r.paechter||'(kein Pächter)')}</div><div class="parcel-ov-date">${r.datum||'Kein Datum'}</div></div></div>
+    <div class="parcel-ov-body"><div class="parcel-badges">${badges.length?badges.map(b=>`<span class="badge ${b.cls}">${b.t}</span>`).join(''):'<span class="badge badge-grey">Keine Angaben</span>'}</div>
+    <div class="parcel-ov-rows">
+      <div class="ov-row"><span class="ov-key">Baujahr</span><span class="ov-val">${r.baujahr||'—'}</span></div>
+      <div class="ov-row"><span class="ov-key">Laube-Größe</span><span class="ov-val">${r.groesse?r.groesse+' m²':'—'}</span></div>
+      <div class="ov-row"><span class="ov-key">Pool-Größe</span><span class="ov-val">${r.pool==='ja'&&r.poolg?r.poolg:'—'}</span></div>
+      <div class="ov-row"><span class="ov-key">Kehrbescheid</span><span class="ov-val ${r.kehr}">${r.kehr||'—'}</span></div>
+      <div class="ov-row"><span class="ov-key">Abw.-Nachweis</span><span class="ov-val ${r.awnw}">${r.awnw||'—'}</span></div>
+      ${r.sonst?`<div class="ov-row"><span class="ov-key">Sonstiges</span><span class="ov-val" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px">${esc(r.sonst)}</span></div>`:''}
+    </div></div>`;
+    pg.appendChild(d);
+  });
+}
+function kpi(icon,label,val,sub){return`<div class="stat-card"><div class="stat-icon">${icon}</div><div class="stat-val">${val}</div><div class="stat-label">${label}</div><div class="stat-sub">${sub}</div></div>`;}
+function renderBarChart(id,items,color){
+  const max=Math.max(...items.map(i=>i.v),1);
+  document.getElementById(id).innerHTML=items.map(item=>`<div class="bar-item"><div class="bar-label">${item.l}</div><div class="bar-track"><div class="bar-fill" style="width:${item.v>0?Math.max(item.v/max*100,4):0}%;background:${color}"></div></div><div class="bar-count">${item.v}</div></div>`).join('');
+}
+
+/* ══════════════════════════════════════════
+   MOBILE CARDS
+══════════════════════════════════════════ */
+function renderCards(){
+  const list=document.getElementById('cards-list');
+  document.getElementById('empty-mobile').style.display=rows.length?'none':'block';
+  list.querySelectorAll('.card').forEach(c=>c.remove());
+  rows.forEach(r=>{
+    const card=document.createElement('div'); card.className='card'; card.id='card-'+r.nr;
+    card.innerHTML=`<div class="card-header" onclick="toggleCard(${r.nr})">
+      <div class="card-nr">${r.nr}</div>
+      <div style="flex:1"><div class="card-name">${esc(r.paechter||'(kein Pächter)')}</div><div class="card-name-sub">${r.datum||'Kein Datum'}</div></div>
+      <button class="card-del" onclick="event.stopPropagation();delRow(${r.nr})">&#x2715; Löschen</button>
+      <div class="card-toggle" id="toggle-${r.nr}">&#9660;</div>
+    </div>
+    <div class="card-body" id="body-${r.nr}">
+      <div class="field-group"><div class="group-title">Grunddaten</div>
+        <div class="field-row">
+          <div class="field"><label>Pächter</label>${mInp('paechter','text',r.paechter,r.nr,'Name…')}</div>
+          <div class="field"><label>Datum</label>${mInp('datum','date',r.datum,r.nr,'')}</div>
+        </div>
+      </div>
+      <div class="field-group"><div class="group-title g1">Gebäude</div>
+        <div class="field-row">
+          <div class="field"><label>Gartenlaube &gt; 24 m²?</label>${mSel('laube',r.laube,r.nr,YN)}</div>
+          <div class="field"><label>Größe (m²)</label>${mInp('groesse','number',r.groesse,r.nr,'—')}</div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Baujahr Gebäude</label>${mSel('baujahr',r.baujahr,r.nr,BAUS)}</div>
+          <div class="field"><label>Terrasse überdacht?</label>${mSel('terrasse',r.terrasse,r.nr,YN)}</div>
+        </div>
+        <div class="field-row single"><div class="field"><label>Sonstige Gebäude</label>${mInp('sg','text',r.sg,r.nr,'z.B. Blechschuppen…')}</div></div>
+      </div>
+      <div class="field-group"><div class="group-title g2">Feuerstätte</div>
+        <div class="field-row">
+          <div class="field"><label>Feuerstätte / Schornstein?</label>${mSel('feuer',r.feuer,r.nr,YN)}</div>
+          <div class="field"><label>Errichtungsjahr</label>${mInp('fjahr','number',r.fjahr,r.nr,'—')}</div>
+        </div>
+        <div class="field-row single"><div class="field"><label>Kehrbescheinigung?</label>${mSel('kehr',r.kehr,r.nr,YN)}</div></div>
+      </div>
+      <div class="field-group"><div class="group-title g3">Pool</div>
+        <div class="field-row">
+          <div class="field"><label>Pool vorhanden?</label>${mSel('pool',r.pool,r.nr,YN)}</div>
+          <div class="field"><label>Größe / Durchmesser</label>${mInp('poolg','text',r.poolg,r.nr,'—')}</div>
+        </div>
+      </div>
+      <div class="field-group"><div class="group-title g4">Abwasser</div>
+        <div class="field-row">
+          <div class="field"><label>Spüle?</label>${mSel('spuele',r.spuele,r.nr,YN)}</div>
+          <div class="field"><label>Toilette?</label>${mSel('toil',r.toil,r.nr,YN)}</div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Waschbecken?</label>${mSel('wb',r.wb,r.nr,YN)}</div>
+          <div class="field"><label>Waschmaschine?</label>${mSel('wm',r.wm,r.nr,YN)}</div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Dusche?</label>${mSel('dusche',r.dusche,r.nr,YN)}</div>
+          <div class="field"><label>Geschirrspüler?</label>${mSel('gs',r.gs,r.nr,YN)}</div>
+        </div>
+        <div class="field-row single"><div class="field"><label>Abwasserentsorgungsnachweis?</label>${mSel('awnw',r.awnw,r.nr,YN)}</div></div>
+      </div>
+      <div class="field-group"><div class="group-title g5">Sonstiges</div>
+        <div class="field-row single"><div class="field"><label>Sonstiges</label>${mInp('sonst','text',r.sonst,r.nr,'Anmerkungen…')}</div></div>
+      </div>
+    </div>`;
+    list.appendChild(card);
+    card.querySelectorAll('.fs').forEach(applyFS);
+    if(r===rows[rows.length-1]) openCard(r.nr);
+  });
+}
+function mInp(f,t,v,nr,ph){return`<input class="fi" type="${t}" value="${esc(v||'')}" placeholder="${ph}"${t==='number'?' min="0" inputmode="numeric"':''} onchange="upd(${nr},'${f}',this.value)" oninput="upd(${nr},'${f}',this.value)">`;}
+function mSel(f,v,nr,opts){const o=opts.map(x=>`<option value="${x}"${x===v?' selected':''}>${x||'—'}</option>`).join('');return`<select class="fs" onchange="upd(${nr},'${f}',this.value);applyFS(this)">${o}</select>`;}
+function toggleCard(nr){const b=document.getElementById('body-'+nr),t=document.getElementById('toggle-'+nr);const o=b.classList.toggle('open');t.classList.toggle('open',o);}
+function openCard(nr){const b=document.getElementById('body-'+nr),t=document.getElementById('toggle-'+nr);if(b){b.classList.add('open');t.classList.add('open');}}
+
+/* ══════════════════════════════════════════
+   DESKTOP TABLE
+══════════════════════════════════════════ */
+function renderTable(){
+  const tb=document.getElementById('tbody');
+  document.getElementById('empty-desk').style.display=rows.length?'none':'block';
+  tb.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="cnr sep">${r.nr}</td><td class="cck sep"><button class="del-btn" onclick="delRow(${r.nr})">&#x2715;</button></td>`+
+      td(inp('paechter','text',r.paechter,r.nr,'Pächter…'))+td(inp('datum','date',r.datum,r.nr,''))+
+      tdS(sel('laube',r.laube,r.nr,YN))+td(inp('groesse','number',r.groesse,r.nr,'—'))+td(sel('baujahr',r.baujahr,r.nr,BAUS))+td(sel('terrasse',r.terrasse,r.nr,YN))+tdS(inp('sg','text',r.sg,r.nr,'—'))+
+      td(sel('feuer',r.feuer,r.nr,YN))+td(inp('fjahr','number',r.fjahr,r.nr,'—'))+tdS(sel('kehr',r.kehr,r.nr,YN))+
+      td(sel('pool',r.pool,r.nr,YN))+tdS(inp('poolg','text',r.poolg,r.nr,'—'))+
+      td(sel('spuele',r.spuele,r.nr,YN))+td(sel('toil',r.toil,r.nr,YN))+td(sel('wb',r.wb,r.nr,YN))+td(sel('wm',r.wm,r.nr,YN))+td(sel('dusche',r.dusche,r.nr,YN))+td(sel('gs',r.gs,r.nr,YN))+tdS(sel('awnw',r.awnw,r.nr,YN))+
+      td(inp('sonst','text',r.sonst,r.nr,'—'));
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('.cs').forEach(applyCS);
+}
+const td=h=>`<td>${h}</td>`, tdS=h=>`<td class="sep">${h}</td>`;
+const inp=(f,t,v,nr,ph)=>`<input class="ci" type="${t}" value="${esc(v||'')}" placeholder="${ph}"${t==='number'?' min="0"':''} onchange="upd(${nr},'${f}',this.value)" oninput="upd(${nr},'${f}',this.value)">`;
+function sel(f,v,nr,opts){const o=opts.map(x=>`<option value="${x}"${x===v?' selected':''}>${x||'—'}</option>`).join('');return`<select class="cs" onchange="upd(${nr},'${f}',this.value);applyCS(this)">${o}</select>`;}
+
+/* ══════════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════════ */
+function toast(msg){const t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+function showOverlay(text,sub){document.getElementById('ov-text').textContent=text;document.getElementById('ov-sub').textContent=sub;document.getElementById('overlay').classList.add('show');}
+function hideOverlay(){document.getElementById('overlay').classList.remove('show');}
+function setAlert(id,type,msg){const el=document.getElementById(id);el.className='modal-alert'+(type?' '+type:'');el.innerHTML=msg;el.style.display=type?'block':'none';}
+
+/* ══════════════════════════════════════════
+   PDF EXPORT (Dashboard-style report)
+══════════════════════════════════════════ */
+async function exportDashPDF(){
+  if(!rows.length){toast('Keine Parzellen vorhanden');return;}
+  showOverlay('PDF wird erstellt…','Einen Moment bitte');
+  await new Promise(r=>setTimeout(r,80));
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+    const anlage=anlageVal()||'(unbekannt)';
+    const today=new Date().toLocaleDateString('de-DE');
+    const GD=[26,58,42],GM=[45,90,61],GP=[232,242,235],AMBER=[200,130,26];
+    const WHITE=[255,255,255],MUTED=[107,122,110],DARK=[26,32,21],RED=[192,57,43];
+    function pageHeader(label){
+      doc.setFillColor(...GD);doc.rect(0,0,W,18,'F');
+      doc.setTextColor(142,207,160);doc.setFontSize(10);doc.setFont('helvetica','bold');
+      doc.text('Kleingartenanlagen – Erfassungsbericht',10,8);
+      doc.setFontSize(7);doc.setFont('helvetica','normal');
+      doc.text('Anlage: '+anlage+'  |  Erstellt: '+today,10,14);
+      doc.setTextColor(...WHITE);doc.text(label,W-10,11,{align:'right'});
+    }
+    function pageFooter(){
+      const pg=doc.internal.getCurrentPageInfo().pageNumber,tot=doc.internal.getNumberOfPages();
+      doc.setFontSize(6.5);doc.setTextColor(160);
+      doc.text('Seite '+pg+' / '+tot,W/2,H-5,{align:'center'});
+      doc.text('Kleingartenanlage: '+anlage,10,H-5);
+    }
+    function miniBar(x,y,w,h,val,max,color){
+      doc.setFillColor(230,240,232);doc.roundedRect(x,y,w,h,1,1,'F');
+      if(val>0){doc.setFillColor(...color);doc.roundedRect(x,y,Math.max(val/max*w,2),h,1,1,'F');}
+    }
+    /* PAGE 1 */
+    pageHeader('Seite 1 – Zusammenfassung');
+    doc.setFillColor(...GP);doc.rect(10,22,W-20,22,'F');
+    doc.setTextColor(...GD);doc.setFontSize(16);doc.setFont('helvetica','bold');
+    doc.text('Bestandsaufnahme Kleingartenanlagen',W/2,31,{align:'center'});
+    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text(anlage,W/2,38,{align:'center'});
+    let y=50;
+    const mitAbw=rows.filter(r=>['spuele','toil','wb','wm','dusche','gs'].some(f=>r[f]==='ja')).length;
+    const ohneNw=rows.filter(r=>['spuele','toil','wb','wm','dusche','gs'].some(f=>r[f]==='ja')&&r.awnw!=='ja').length;
+    const kpis=[
+      {icon:'Gesamt',val:rows.length,sub:'Parzellen',col:GD},
+      {icon:'Laube>24m²',val:cnt('laube'),sub:pct(cnt('laube'))+'%',col:GM},
+      {icon:'Feuerstätte',val:cnt('feuer'),sub:pct(cnt('feuer'))+'%',col:[59,74,48]},
+      {icon:'Pool',val:cnt('pool'),sub:pct(cnt('pool'))+'%',col:[45,74,90]},
+      {icon:'Abwasser',val:mitAbw,sub:pct(mitAbw)+'%',col:[74,58,45]},
+      {icon:'Ohne Nachw.',val:ohneNw,sub:ohneNw>0?'! Prüfen':'OK',col:ohneNw>0?RED:[45,90,61]},
+    ];
+    const kW=28,kH=20,kGap=4,kStart=10;
+    kpis.forEach((k,i)=>{
+      const kx=kStart+i*(kW+kGap),ky=y;
+      doc.setFillColor(...k.col);doc.roundedRect(kx,ky,kW,kH,2,2,'F');
+      doc.setTextColor(...WHITE);doc.setFontSize(14);doc.setFont('helvetica','bold');
+      doc.text(String(k.val),kx+kW/2,ky+9,{align:'center'});
+      doc.setFontSize(5.5);doc.setFont('helvetica','normal');
+      doc.text(k.icon,kx+kW/2,ky+14,{align:'center'});doc.text(k.sub,kx+kW/2,ky+18,{align:'center'});
+    });
+    y+=27;
+    doc.setFillColor(...GD);doc.roundedRect(10,y,W-20,7,1.5,1.5,'F');
+    doc.setTextColor(...WHITE);doc.setFontSize(8);doc.setFont('helvetica','bold');
+    doc.text('Statistische Auswertung',14,y+5);y+=10;
+    const colAx=10,colBx=W/2+2,colW=W/2-14;
+    doc.setTextColor(...GD);doc.setFontSize(7.5);doc.setFont('helvetica','bold');
+    doc.text('Gebäude & Ausstattung',colAx,y);doc.text('Abwasser-Anschlüsse',colBx,y);y+=4;
+    const gebItems=[{l:'Gartenlaube >24m²',v:cnt('laube')},{l:'Terrasse überdacht',v:cnt('terrasse')},{l:'Feuerstätte',v:cnt('feuer')},{l:'Kehrbescheinigung',v:cnt('kehr')},{l:'Pool',v:cnt('pool')}];
+    const abwItems=[{l:'Spüle',v:cnt('spuele')},{l:'Toilette',v:cnt('toil')},{l:'Waschbecken',v:cnt('wb')},{l:'Waschmasch.',v:cnt('wm')},{l:'Dusche',v:cnt('dusche')},{l:'Geschirrsp.',v:cnt('gs')},{l:'Abw.-Nachweis',v:cnt('awnw')}];
+    const maxG=Math.max(...gebItems.map(i=>i.v),1),maxA=Math.max(...abwItems.map(i=>i.v),1);
+    const bh=4,bg=2.5,startY=y;
+    gebItems.forEach((item,i)=>{const by=startY+i*(bh+bg);doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(...DARK);doc.text(item.l,colAx+38,by+bh-.5,{align:'right'});miniBar(colAx+40,by,colW-50,bh,item.v,maxG,GM);doc.setFontSize(6);doc.setFont('helvetica','bold');doc.setTextColor(...GM);doc.text(String(item.v),colAx+colW-8,by+bh-.5,{align:'right'});});
+    abwItems.forEach((item,i)=>{const by=startY+i*(bh+bg);doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(...DARK);doc.text(item.l,colBx+30,by+bh-.5,{align:'right'});miniBar(colBx+32,by,colW-42,bh,item.v,maxA,[45,74,90]);doc.setFontSize(6);doc.setFont('helvetica','bold');doc.setTextColor(45,74,90);doc.text(String(item.v),colBx+colW-8,by+bh-.5,{align:'right'});});
+    y=startY+Math.max(gebItems.length,abwItems.length)*(bh+bg)+6;
+    doc.setTextColor(...GD);doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.text('Baujahre',colAx,y);y+=4;
+    const bauMap={};
+    rows.forEach(r=>{if(!r.baujahr||r.baujahr==='k.A.') return;const yr=parseInt(r.baujahr);const b=yr<1950?'vor 1950':yr<1970?'1950–1969':yr<1990?'1970–1989':yr<2000?'1990–1999':yr<2010?'2000–2009':yr<2020?'2010–2019':'2020+';bauMap[b]=(bauMap[b]||0)+1;});
+    const bo=['vor 1950','1950–1969','1970–1989','1990–1999','2000–2009','2010–2019','2020+'];
+    const bauItems=bo.filter(k=>bauMap[k]).map(k=>({l:k,v:bauMap[k]}));
+    const maxB=Math.max(...(bauItems.length?bauItems.map(i=>i.v):[1]),1);
+    if(bauItems.length){bauItems.forEach((item,i)=>{const by=y+i*(bh+bg);doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(...DARK);doc.text(item.l,colAx+30,by+bh-.5,{align:'right'});miniBar(colAx+32,by,80,bh,item.v,maxB,AMBER);doc.setFontSize(6);doc.setFont('helvetica','bold');doc.setTextColor(...AMBER);doc.text(String(item.v),colAx+116,by+bh-.5,{align:'right'});});y+=bauItems.length*(bh+bg)+4;}
+    if(ohneNw>0){doc.setFillColor(255,243,224);doc.roundedRect(10,y,W-20,10,2,2,'F');doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(184,92,0);doc.text('Handlungsbedarf: '+ohneNw+' Parzelle'+(ohneNw!==1?'n haben':' hat')+' Abwasseranschlüsse ohne Entsorgungsnachweis!',14,y+7);y+=14;}
+    pageFooter();
+    /* PARZELLEN PAGES */
+    const perPage=3;
+    for(let p=0;p<rows.length;p+=perPage){
+      doc.addPage();pageHeader('Parzellen '+(p+1)+'–'+Math.min(p+perPage,rows.length));
+      let py=24;
+      rows.slice(p,p+perPage).forEach(r=>{
+        const abwList=['spuele','toil','wb','wm','dusche','gs'].filter(f=>r[f]==='ja');
+        const hasWarn=abwList.length>0&&r.awnw!=='ja';
+        const cardH=82;
+        doc.setFillColor(248,252,249);doc.roundedRect(10,py,W-20,cardH,2,2,'F');
+        doc.setDrawColor(...GP);doc.setLineWidth(.3);doc.roundedRect(10,py,W-20,cardH,2,2,'S');
+        doc.setFillColor(...GD);doc.roundedRect(10,py,W-20,9,2,2,'F');doc.rect(10,py+4,W-20,5,'F');
+        doc.setTextColor(...WHITE);doc.setFontSize(9);doc.setFont('helvetica','bold');
+        doc.text('Parzelle Nr. '+r.nr+(r.paechter?' – '+r.paechter:''),14,py+6.5);
+        if(r.datum){doc.setFontSize(7);doc.setFont('helvetica','normal');doc.text('Erfasst: '+r.datum,W-14,py+6.5,{align:'right'});}
+        if(hasWarn){doc.setFillColor(...RED);doc.roundedRect(W-52,py+1.5,40,5,1,1,'F');doc.setTextColor(...WHITE);doc.setFontSize(6);doc.setFont('helvetica','bold');doc.text('! Kein Abw.-Nachweis',W-32,py+5.2,{align:'center'});}
+        const cx=py+12;
+        function cell(x,y,label,val,isJa){doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(...MUTED);doc.text(label,x,y);doc.setFont('helvetica','bold');doc.setTextColor(...(isJa===true?GM:isJa===false?[180,180,180]:DARK));doc.text(val||'—',x,y+4);}
+        const c1=12,c2=W/2-5,c3=W/2+8;
+        doc.setFontSize(6.5);doc.setFont('helvetica','bold');doc.setTextColor(...GD);doc.text('GEBÄUDE & AUSSTATTUNG',c1,cx);doc.setDrawColor(...GP);doc.setLineWidth(.3);doc.line(c1,cx+1,c2-4,cx+1);
+        cell(c1,cx+6,'Gartenlaube > 24 m²',r.laube||'—',r.laube==='ja');cell(c1,cx+14,'Größe (m²)',r.groesse?r.groesse+' m²':'—',null);cell(c1,cx+22,'Baujahr',r.baujahr||'—',null);cell(c1,cx+30,'Terrasse überdacht',r.terrasse||'—',r.terrasse==='ja');cell(c1,cx+38,'Sonstige Gebäude',r.sg||'—',null);cell(c1,cx+46,'Feuerstätte',r.feuer||'—',r.feuer==='ja');cell(c1,cx+54,'Errichtungsjahr',r.fjahr||'—',null);cell(c1,cx+62,'Kehrbescheinigung',r.kehr||'—',r.kehr==='ja');
+        doc.setFontSize(6.5);doc.setFont('helvetica','bold');doc.setTextColor(...GD);doc.text('POOL',c2,cx);doc.setDrawColor(...GP);doc.line(c2,cx+1,c2+40,cx+1);
+        cell(c2,cx+6,'Pool vorhanden',r.pool||'—',r.pool==='ja');cell(c2,cx+14,'Pool-Größe',r.pool==='ja'&&r.poolg?r.poolg:'—',null);
+        doc.setFontSize(6.5);doc.setFont('helvetica','bold');doc.setTextColor(...GD);doc.text('ABWASSER',c2,cx+26);doc.setDrawColor(...GP);doc.line(c2,cx+27,c2+40,cx+27);
+        cell(c2,cx+32,'Spüle',r.spuele||'—',r.spuele==='ja');cell(c2,cx+40,'Toilette',r.toil||'—',r.toil==='ja');cell(c2,cx+48,'Waschbecken',r.wb||'—',r.wb==='ja');cell(c2,cx+56,'Dusche',r.dusche||'—',r.dusche==='ja');
+        cell(c3,cx+32,'Waschmasch.',r.wm||'—',r.wm==='ja');cell(c3,cx+40,'Geschirrsp.',r.gs||'—',r.gs==='ja');cell(c3,cx+48,'Abw.-Nachweis',r.awnw||'—',r.awnw==='ja');
+        if(r.sonst){doc.setFontSize(6);doc.setFont('helvetica','normal');doc.setTextColor(...MUTED);doc.text('Sonstiges:',c2,cx+62);doc.setFont('helvetica','bold');doc.setTextColor(...DARK);doc.text(r.sonst,c2+18,cx+62,{maxWidth:W-20-c2-10});}
+        py+=cardH+4;
+      });
+      pageFooter();
+    }
+    const fname='Bericht_'+(anlage.replace(/\s+/g,'_')||'KGA')+'_'+today.replace(/\./g,'-')+'.pdf';
+    doc.save(fname); hideOverlay(); toast('&#10003; PDF gespeichert');
+  }catch(err){hideOverlay();alert('Fehler: '+err.message);console.error(err);}
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+ghLoadCfg();
+document.getElementById('btn-gh-save').disabled = !ghIsConfigured();
+document.getElementById('btn-gh-hist').disabled = !ghIsConfigured();
+
+if(!load()){
+  addRow({nr:nextNr++,paechter:'Meyer',datum:'2026-01-03',laube:'ja',groesse:'36',baujahr:'1985',terrasse:'ja',sg:'Blechschuppen',feuer:'ja',fjahr:'',kehr:'nein',pool:'ja',poolg:'3 m',spuele:'nein',toil:'nein',wb:'nein',wm:'nein',dusche:'nein',gs:'nein',awnw:'nein',sonst:''});
+  showTab('dash');
+}else{
+  render(); renderDash();
+}
+</script>
+</body>
+</html>
